@@ -1,0 +1,1838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adversarial-Resilient SOC Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-void: #04060f;
+    --bg-deep: #070b18;
+    --bg-surface: #0c1220;
+    --bg-card: rgba(12,20,38,0.85);
+    --bg-glass: rgba(14,24,50,0.6);
+    --border-dim: rgba(56,100,180,0.18);
+    --border-mid: rgba(80,140,255,0.28);
+    --border-glow: rgba(100,170,255,0.5);
+    --blue-core: #3b82f6;
+    --blue-bright: #60a5fa;
+    --blue-glow: rgba(59,130,246,0.35);
+    --purple-core: #7c3aed;
+    --purple-bright: #a78bfa;
+    --purple-glow: rgba(124,58,237,0.35);
+    --cyan-core: #06b6d4;
+    --cyan-bright: #22d3ee;
+    --red-core: #ef4444;
+    --red-bright: #f87171;
+    --red-glow: rgba(239,68,68,0.4);
+    --amber-core: #f59e0b;
+    --amber-bright: #fbbf24;
+    --green-core: #10b981;
+    --green-bright: #34d399;
+    --green-glow: rgba(16,185,129,0.3);
+    --text-primary: #e2eaf8;
+    --text-secondary: #7b9bc8;
+    --text-muted: #3d5580;
+    --text-label: #4a6fa5;
+    --font-mono: 'JetBrains Mono', monospace;
+    --font-display: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%; height: 100%; overflow-x: hidden;
+    background: var(--bg-void);
+    color: var(--text-primary);
+    font-family: var(--font-display);
+  }
+
+  body {
+    background: 
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(59,130,246,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 80%, rgba(124,58,237,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 50% 50%, rgba(6,182,212,0.03) 0%, transparent 70%),
+      var(--bg-void);
+    min-height: 100vh;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--border-mid); border-radius: 4px; }
+
+  /* ========== LAYOUT ========== */
+  .app-wrapper {
+    display: grid;
+    grid-template-rows: 58px 1fr;
+    grid-template-columns: 64px 1fr;
+    min-height: 100vh;
+    grid-template-areas: "header header" "sidebar main";
+  }
+
+  /* ========== HEADER ========== */
+  header {
+    grid-area: header;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    background: rgba(7,11,24,0.95);
+    border-bottom: 1px solid var(--border-dim);
+    backdrop-filter: blur(20px);
+    z-index: 100;
+    position: sticky; top: 0;
+  }
+
+  .header-left { display: flex; align-items: center; gap: 14px; }
+
+  .logo-mark {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, var(--blue-core), var(--purple-core));
+    border-radius: 8px;
+    box-shadow: 0 0 16px var(--blue-glow);
+    flex-shrink: 0;
+  }
+
+  .logo-mark svg { width: 18px; height: 18px; }
+
+  .system-name {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  .system-subtitle {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 1px;
+  }
+
+  .header-center { display: flex; align-items: center; gap: 32px; }
+
+  .nav-tab {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px 0;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .nav-tab.active { color: var(--blue-bright); border-color: var(--blue-core); }
+  .nav-tab:hover { color: var(--text-secondary); }
+
+  .header-right { display: flex; align-items: center; gap: 16px; }
+
+  .status-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(16,185,129,0.08);
+    border: 1px solid rgba(16,185,129,0.25);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--green-bright);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green-core);
+    box-shadow: 0 0 8px var(--green-core);
+    animation: pulse-green 2s infinite;
+  }
+
+  @keyframes pulse-green {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green-core); }
+    50% { opacity: 0.6; box-shadow: 0 0 16px var(--green-core); }
+  }
+
+  .header-time {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-label);
+    letter-spacing: 0.06em;
+  }
+
+  .header-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; }
+  .header-meta span:first-child { font-size: 10px; color: var(--text-secondary); font-family: var(--font-mono); }
+  .header-meta span:last-child { font-size: 9px; color: var(--text-muted); font-family: var(--font-mono); }
+
+  .icon-btn {
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-dim);
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--border-mid); color: var(--text-secondary); }
+
+  /* ========== SIDEBAR ========== */
+  aside {
+    grid-area: sidebar;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 0; gap: 8px;
+    background: rgba(7,11,24,0.9);
+    border-right: 1px solid var(--border-dim);
+    position: sticky; top: 58px; height: calc(100vh - 58px);
+  }
+
+  .side-btn {
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .side-btn:hover { background: var(--bg-glass); color: var(--text-secondary); }
+
+  .side-btn.active {
+    background: rgba(59,130,246,0.12);
+    color: var(--blue-bright);
+    box-shadow: 0 0 12px rgba(59,130,246,0.15);
+  }
+
+  .side-btn.active::before {
+    content: '';
+    position: absolute; left: -1px;
+    width: 3px; height: 20px;
+    background: var(--blue-core);
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 8px var(--blue-core);
+  }
+
+  .side-divider {
+    width: 30px; height: 1px;
+    background: var(--border-dim);
+    margin: 6px 0;
+  }
+
+  .side-btn svg { width: 17px; height: 17px; }
+
+  /* ========== MAIN ========== */
+  main {
+    grid-area: main;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  /* ========== METRIC CARDS ========== */
+  .metric-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 12px;
+    padding: 16px 18px;
+    position: relative; overflow: hidden;
+    backdrop-filter: blur(16px);
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .metric-card.blue::before { background: linear-gradient(90deg, transparent, var(--blue-core), transparent); }
+  .metric-card.purple::before { background: linear-gradient(90deg, transparent, var(--purple-core), transparent); }
+  .metric-card.red::before { background: linear-gradient(90deg, transparent, var(--red-core), transparent); }
+  .metric-card.cyan::before { background: linear-gradient(90deg, transparent, var(--cyan-core), transparent); }
+
+  .metric-card:hover { border-color: var(--border-mid); }
+
+  .metric-card .corner-glow {
+    position: absolute; top: -20px; right: -20px;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    opacity: 0.15;
+    filter: blur(20px);
+  }
+
+  .metric-card.blue .corner-glow { background: var(--blue-core); }
+  .metric-card.purple .corner-glow { background: var(--purple-core); }
+  .metric-card.red .corner-glow { background: var(--red-core); }
+  .metric-card.cyan .corner-glow { background: var(--cyan-core); }
+
+  .metric-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+
+  .metric-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .metric-card.blue .metric-icon { background: rgba(59,130,246,0.12); color: var(--blue-bright); }
+  .metric-card.purple .metric-icon { background: rgba(124,58,237,0.12); color: var(--purple-bright); }
+  .metric-card.red .metric-icon { background: rgba(239,68,68,0.12); color: var(--red-bright); }
+  .metric-card.cyan .metric-icon { background: rgba(6,182,212,0.12); color: var(--cyan-bright); }
+
+  .metric-icon svg { width: 16px; height: 16px; }
+
+  .metric-trend {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 3px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+
+  .trend-up { background: rgba(239,68,68,0.1); color: var(--red-bright); border: 1px solid rgba(239,68,68,0.2); }
+  .trend-dn { background: rgba(16,185,129,0.1); color: var(--green-bright); border: 1px solid rgba(16,185,129,0.2); }
+  .trend-neu { background: rgba(245,158,11,0.1); color: var(--amber-bright); border: 1px solid rgba(245,158,11,0.2); }
+
+  .metric-value {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 4px;
+    letter-spacing: -0.02em;
+  }
+
+  .metric-card.blue .metric-value { color: var(--blue-bright); }
+  .metric-card.purple .metric-value { color: var(--purple-bright); }
+  .metric-card.red .metric-value { color: var(--red-bright); }
+  .metric-card.cyan .metric-value { color: var(--cyan-bright); }
+
+  .metric-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-family: var(--font-mono);
+  }
+
+  .metric-sub {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-dim);
+  }
+
+  /* ========== GRID LAYOUT ========== */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+  }
+
+  .left-col { display: flex; flex-direction: column; gap: 16px; }
+  .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ========== PANEL ========== */
+  .panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-dim);
+    border-radius: 12px;
+    overflow: hidden;
+    backdrop-filter: blur(16px);
+  }
+
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border-dim);
+    background: rgba(0,0,0,0.15);
+  }
+
+  .panel-title-group { display: flex; align-items: center; gap: 9px; }
+
+  .panel-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+  }
+
+  .panel-dot.blue { background: var(--blue-core); box-shadow: 0 0 8px var(--blue-core); }
+  .panel-dot.red { background: var(--red-core); box-shadow: 0 0 8px var(--red-core); }
+  .panel-dot.purple { background: var(--purple-core); box-shadow: 0 0 8px var(--purple-core); }
+  .panel-dot.cyan { background: var(--cyan-core); box-shadow: 0 0 8px var(--cyan-core); }
+  .panel-dot.amber { background: var(--amber-core); box-shadow: 0 0 8px var(--amber-core); }
+  .panel-dot.green { background: var(--green-core); box-shadow: 0 0 8px var(--green-core); }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+  }
+
+  .panel-badge {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    background: rgba(59,130,246,0.1);
+    border: 1px solid rgba(59,130,246,0.2);
+    color: var(--blue-bright);
+    letter-spacing: 0.06em;
+  }
+
+  .panel-content { padding: 14px 18px; }
+
+  /* ========== LOG TABLE ========== */
+  .log-table { width: 100%; border-collapse: collapse; }
+
+  .log-table th {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    padding: 7px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-dim);
+    white-space: nowrap;
+  }
+
+  .log-table td {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(56,100,180,0.08);
+    white-space: nowrap;
+    color: var(--text-secondary);
+  }
+
+  .log-table tr:last-child td { border-bottom: none; }
+
+  .log-table tr.row-normal { background: rgba(16,185,129,0.02); }
+  .log-table tr.row-suspicious { background: rgba(245,158,11,0.04); }
+  .log-table tr.row-critical { background: rgba(239,68,68,0.05); }
+
+  .log-table tr:hover td { background: rgba(59,130,246,0.04); }
+
+  .log-table td.ts { color: var(--text-muted); font-size: 9px; }
+  .log-table td.user { color: var(--cyan-bright); }
+  .log-table td.process { color: var(--purple-bright); font-size: 9px; }
+  .log-table td.ip { color: var(--text-label); font-size: 9px; }
+
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 9px; font-family: var(--font-mono);
+    text-transform: uppercase; letter-spacing: 0.06em;
+  }
+
+  .status-pill.normal { background: rgba(16,185,129,0.1); color: var(--green-bright); border: 1px solid rgba(16,185,129,0.2); }
+  .status-pill.suspicious { background: rgba(245,158,11,0.1); color: var(--amber-bright); border: 1px solid rgba(245,158,11,0.2); }
+  .status-pill.critical { background: rgba(239,68,68,0.1); color: var(--red-bright); border: 1px solid rgba(239,68,68,0.2); animation: pulse-red 2s infinite; }
+
+  @keyframes pulse-red {
+    0%, 100% { box-shadow: none; }
+    50% { box-shadow: 0 0 8px rgba(239,68,68,0.3); }
+  }
+
+  .pill-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+  }
+  .status-pill.normal .pill-dot { background: var(--green-bright); }
+  .status-pill.suspicious .pill-dot { background: var(--amber-bright); }
+  .status-pill.critical .pill-dot { background: var(--red-bright); }
+
+  /* ========== THREAT GAUGE ========== */
+  .threat-gauge-wrap {
+    display: flex; flex-direction: column; align-items: center; padding: 16px 0 8px;
+  }
+
+  .gauge-ring-container {
+    position: relative; width: 160px; height: 160px;
+  }
+
+  .gauge-svg { transform: rotate(-90deg); }
+
+  .gauge-bg { fill: none; stroke: rgba(56,100,180,0.12); stroke-width: 10; }
+  .gauge-track {
+    fill: none;
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1.5s ease;
+  }
+
+  .gauge-center {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+
+  .gauge-pct {
+    font-family: var(--font-mono);
+    font-size: 30px;
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .gauge-sub {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  .gauge-label {
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  .gauge-level-text {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-family: var(--font-mono);
+  }
+
+  .gauge-desc {
+    font-size: 9px;
+    color: var(--text-muted);
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.05em;
+  }
+
+  .threat-indicators {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    padding: 0 14px 14px;
+  }
+
+  .threat-indicator {
+    padding: 8px 10px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+  }
+
+  .ti-label { font-family: var(--font-mono); font-size: 8px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+  .ti-value { font-family: var(--font-mono); font-size: 14px; font-weight: 600; margin-top: 3px; }
+
+  /* ========== CONFIDENCE BARS ========== */
+  .conf-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .conf-item { }
+
+  .conf-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+
+  .conf-name {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+  }
+
+  .conf-pct {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .conf-bar-track {
+    height: 5px;
+    background: rgba(56,100,180,0.12);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .conf-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1.2s ease;
+  }
+
+  .conf-tag {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 3px;
+  }
+
+  /* ========== SUSPICIOUS USERS ========== */
+  .sus-list { display: flex; flex-direction: column; gap: 2px; }
+
+  .sus-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .sus-item:hover { background: rgba(59,130,246,0.05); }
+
+  .sus-rank {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    width: 14px;
+    flex-shrink: 0;
+  }
+
+  .sus-avatar {
+    width: 26px; height: 26px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .sus-info { flex: 1; min-width: 0; }
+
+  .sus-user {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-secondary);
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .sus-proc {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    margin-top: 1px;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .sus-score {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+
+  .sus-mini-bar {
+    width: 40px; height: 4px;
+    background: rgba(56,100,180,0.12);
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sus-mini-fill { height: 100%; border-radius: 2px; }
+
+  /* ========== ALERT TIMELINE ========== */
+  .timeline-list { display: flex; flex-direction: column; gap: 0; }
+
+  .tl-item {
+    display: flex; gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(56,100,180,0.06);
+    position: relative;
+  }
+
+  .tl-item:last-child { border-bottom: none; }
+
+  .tl-icon-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0;
+  }
+
+  .tl-icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .tl-icon svg { width: 13px; height: 13px; }
+  .tl-icon.red { background: rgba(239,68,68,0.1); color: var(--red-bright); border: 1px solid rgba(239,68,68,0.2); }
+  .tl-icon.amber { background: rgba(245,158,11,0.1); color: var(--amber-bright); border: 1px solid rgba(245,158,11,0.2); }
+  .tl-icon.blue { background: rgba(59,130,246,0.1); color: var(--blue-bright); border: 1px solid rgba(59,130,246,0.2); }
+  .tl-icon.purple { background: rgba(124,58,237,0.1); color: var(--purple-bright); border: 1px solid rgba(124,58,237,0.2); }
+  .tl-icon.green { background: rgba(16,185,129,0.1); color: var(--green-bright); border: 1px solid rgba(16,185,129,0.2); }
+
+  .tl-body { flex: 1; min-width: 0; }
+
+  .tl-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+
+  .tl-desc {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    overflow: hidden; text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tl-time {
+    font-family: var(--font-mono);
+    font-size: 8px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+
+  /* ========== RESPONSE ACTIONS ========== */
+  .action-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .action-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-dim);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .action-item:hover { border-color: var(--border-mid); background: rgba(59,130,246,0.04); }
+
+  .action-icon {
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .action-icon svg { width: 14px; height: 14px; }
+
+  .action-icon.red { background: rgba(239,68,68,0.1); color: var(--red-bright); }
+  .action-icon.blue { background: rgba(59,130,246,0.1); color: var(--blue-bright); }
+  .action-icon.amber { background: rgba(245,158,11,0.1); color: var(--amber-bright); }
+  .action-icon.purple { background: rgba(124,58,237,0.1); color: var(--purple-bright); }
+
+  .action-info { flex: 1; min-width: 0; }
+
+  .action-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+  }
+
+  .action-target {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+  }
+
+  .action-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 8px; border-radius: 20px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    flex-shrink: 0;
+  }
+
+  .action-status.executed { background: rgba(16,185,129,0.1); color: var(--green-bright); border: 1px solid rgba(16,185,129,0.2); }
+  .action-status.pending { background: rgba(245,158,11,0.1); color: var(--amber-bright); border: 1px solid rgba(245,158,11,0.2); }
+  .action-status.approved { background: rgba(59,130,246,0.1); color: var(--blue-bright); border: 1px solid rgba(59,130,246,0.2); }
+
+  /* ========== BOTTOM ROW ========== */
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ========== SPARKLINE ========== */
+  .sparkline-wrap {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 8px;
+  }
+
+  /* ========== ANOMALY HEATMAP MINI ========== */
+  .heatmap-row { display: flex; gap: 3px; flex-wrap: wrap; padding: 10px 0 0; }
+
+  .heatmap-cell {
+    width: 18px; height: 18px;
+    border-radius: 3px;
+    opacity: 0.8;
+  }
+
+  /* ========== LIVE INDICATOR ========== */
+  .live-dot {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--red-bright);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .live-dot::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--red-core);
+    box-shadow: 0 0 8px var(--red-core);
+    animation: pulse-green 1.2s infinite;
+  }
+
+  /* ========== MISC ========== */
+  .section-break { height: 1px; background: var(--border-dim); margin: 4px 0; }
+
+  .tag {
+    display: inline-flex; align-items: center;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .tag.blue { background: rgba(59,130,246,0.1); color: var(--blue-bright); }
+  .tag.purple { background: rgba(124,58,237,0.1); color: var(--purple-bright); }
+  .tag.red { background: rgba(239,68,68,0.1); color: var(--red-bright); }
+
+  /* ========== MINI CHART ========== */
+  .mini-chart { padding: 4px 0; }
+
+  /* ========== ANIMATIONS ========== */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .metric-card { animation: fadeInUp 0.5s ease both; }
+  .metric-card:nth-child(1) { animation-delay: 0.05s; }
+  .metric-card:nth-child(2) { animation-delay: 0.1s; }
+  .metric-card:nth-child(3) { animation-delay: 0.15s; }
+  .metric-card:nth-child(4) { animation-delay: 0.2s; }
+
+  .panel { animation: fadeInUp 0.5s ease both; animation-delay: 0.25s; }
+
+  .log-table tr { animation: fadeInUp 0.3s ease both; }
+  .log-table tr:nth-child(1) { animation-delay: 0.3s; }
+  .log-table tr:nth-child(2) { animation-delay: 0.35s; }
+  .log-table tr:nth-child(3) { animation-delay: 0.4s; }
+  .log-table tr:nth-child(4) { animation-delay: 0.45s; }
+  .log-table tr:nth-child(5) { animation-delay: 0.5s; }
+  .log-table tr:nth-child(6) { animation-delay: 0.55s; }
+  .log-table tr:nth-child(7) { animation-delay: 0.6s; }
+
+  /* New log entry flash */
+  @keyframes newRow {
+    0% { background: rgba(59,130,246,0.12); }
+    100% { background: transparent; }
+  }
+
+  .row-new { animation: newRow 1.5s ease both; }
+</style>
+</head>
+<body>
+<div class="app-wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <div class="logo-mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <div>
+        <div class="system-name">Adversarial-Resilient SOC</div>
+        <div class="system-subtitle">Security Operations Center · v3.4.1</div>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="nav-tab active">Dashboard</div>
+      <div class="nav-tab">Forensics</div>
+      <div class="nav-tab">Playbooks</div>
+      <div class="nav-tab">Threat Intel</div>
+      <div class="nav-tab">Reports</div>
+    </div>
+
+    <div class="header-right">
+      <div class="header-meta">
+        <span>ANALYST: <span style="color:var(--blue-bright)">JAYA KUMAR S</span></span>
+        <span>TIER-1 · ACTIVE SESSION</span>
+      </div>
+      <div class="status-badge">
+        <span class="status-dot"></span>
+        ACTIVE · MONITORING
+      </div>
+      <div class="header-time" id="header-clock">--:--:--</div>
+      <div class="icon-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <div class="icon-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <aside>
+    <div class="side-btn active" title="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>
+      </svg>
+    </div>
+    <div class="side-btn" title="Logs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/>
+      </svg>
+    </div>
+    <div class="side-btn" title="Alerts" style="position:relative">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+      <span style="position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--red-core);box-shadow:0 0 6px var(--red-core);border:1.5px solid var(--bg-deep)"></span>
+    </div>
+    <div class="side-divider"></div>
+    <div class="side-btn" title="Threat Analysis">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        <line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+    </div>
+    <div class="side-btn" title="Network Map">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+    </div>
+    <div class="side-divider"></div>
+    <div class="side-btn" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- METRIC CARDS -->
+    <div class="metric-row">
+      <div class="metric-card blue">
+        <div class="corner-glow"></div>
+        <div class="metric-header">
+          <div class="metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+            </svg>
+          </div>
+          <span class="metric-trend trend-up">↑ +12.3%</span>
+        </div>
+        <div class="metric-value" id="total-events">24,817</div>
+        <div class="metric-label">Total Events</div>
+        <div class="metric-sub">Last 24h · Avg 1,034/hr</div>
+      </div>
+
+      <div class="metric-card purple">
+        <div class="corner-glow"></div>
+        <div class="metric-header">
+          <div class="metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <span class="metric-trend trend-up">↑ +8.7%</span>
+        </div>
+        <div class="metric-value" id="suspicious-events">1,482</div>
+        <div class="metric-label">Suspicious Events</div>
+        <div class="metric-sub">5.97% of total · 42 new</div>
+      </div>
+
+      <div class="metric-card red">
+        <div class="corner-glow"></div>
+        <div class="metric-header">
+          <div class="metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+            </svg>
+          </div>
+          <span class="metric-trend trend-up">↑ +31%</span>
+        </div>
+        <div class="metric-value" id="critical-alerts">47</div>
+        <div class="metric-label">Critical Alerts</div>
+        <div class="metric-sub">12 unresolved · 3 escalated</div>
+      </div>
+
+      <div class="metric-card cyan">
+        <div class="corner-glow"></div>
+        <div class="metric-header">
+          <div class="metric-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 8v4l3 3"/>
+            </svg>
+          </div>
+          <span class="metric-trend trend-dn">→ Stable</span>
+        </div>
+        <div class="metric-value">87.4%</div>
+        <div class="metric-label">Avg Confidence Score</div>
+        <div class="metric-sub">Model accuracy · F1: 0.912</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="dashboard-grid">
+
+      <!-- LEFT COLUMN -->
+      <div class="left-col">
+
+        <!-- LOG STREAM -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-dot blue"></div>
+              <span class="panel-title">Real-Time Log Stream</span>
+              <span class="live-dot">Live</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="panel-badge">7 entries shown</span>
+              <div style="display:flex;gap:4px">
+                <span class="tag blue">All</span>
+                <span class="tag red">Critical</span>
+                <span class="tag purple">Suspicious</span>
+              </div>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="log-table" id="log-table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Event Type</th>
+                  <th>User</th>
+                  <th>Process</th>
+                  <th>Source IP</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="log-body">
+                <!-- Rows are dynamically injected from data.json by loadSOCData() -->
+                <tr id="log-loading-row">
+                  <td colspan="6" style="text-align:center;padding:18px;font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:0.1em">
+                    ⟳ &nbsp;Loading data from data.json…
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- BOTTOM ROW: SUSPICIOUS USERS + ALERT TIMELINE + RESPONSE ACTIONS -->
+        <div class="bottom-row">
+
+          <!-- SUSPICIOUS USERS -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <div class="panel-dot red"></div>
+                <span class="panel-title">Top Anomaly Actors</span>
+              </div>
+              <span class="panel-badge">Top 5</span>
+            </div>
+            <div class="panel-content">
+              <div class="sus-list" id="sus-list">
+                <!-- Dynamically populated from data.json -->
+              </div>
+            </div>
+          </div>
+
+          <!-- ALERT TIMELINE -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <div class="panel-dot amber"></div>
+                <span class="panel-title">Alert Timeline</span>
+              </div>
+              <span class="panel-badge">Last 30m</span>
+            </div>
+            <div class="panel-content">
+              <div class="timeline-list" id="timeline-list">
+                <!-- Dynamically populated from data.json -->
+              </div>
+            </div>
+          </div>
+
+          <!-- RESPONSE ACTIONS -->
+          <div class="panel">
+            <div class="panel-header">
+              <div class="panel-title-group">
+                <div class="panel-dot green"></div>
+                <span class="panel-title">Response Actions</span>
+              </div>
+              <span class="panel-badge">SOAR</span>
+            </div>
+            <div class="panel-content">
+              <div class="action-list" id="action-list">
+                <!-- Dynamically populated from data.json -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="right-col">
+
+        <!-- THREAT GAUGE -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-dot red"></div>
+              <span class="panel-title">Threat Level</span>
+            </div>
+            <span class="panel-badge">ELEVATED</span>
+          </div>
+          <div class="threat-gauge-wrap">
+            <div class="gauge-ring-container">
+              <svg class="gauge-svg" width="160" height="160" viewBox="0 0 160 160">
+                <circle class="gauge-bg" cx="80" cy="80" r="65"/>
+                <circle class="gauge-track" id="gauge-track" cx="80" cy="80" r="65"
+                  stroke="url(#gaugeGrad)"
+                  stroke-dasharray="408.41"
+                  stroke-dashoffset="122.52"/>
+                <defs>
+                  <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#f59e0b"/>
+                    <stop offset="60%" stop-color="#ef4444"/>
+                    <stop offset="100%" stop-color="#dc2626"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="gauge-center">
+                <div class="gauge-pct" style="color:var(--red-bright)">70%</div>
+                <div class="gauge-sub">RISK SCORE</div>
+              </div>
+            </div>
+            <div class="gauge-label">
+              <div class="gauge-level-text" style="color:var(--red-bright)">HIGH THREAT</div>
+              <div class="gauge-desc">Active incidents detected</div>
+            </div>
+          </div>
+          <div class="threat-indicators">
+            <div class="threat-indicator">
+              <div class="ti-label">Attack Surface</div>
+              <div class="ti-value" style="color:var(--red-bright)">HIGH</div>
+            </div>
+            <div class="threat-indicator">
+              <div class="ti-label">Dwell Time</div>
+              <div class="ti-value" style="color:var(--amber-bright)">14m</div>
+            </div>
+            <div class="threat-indicator">
+              <div class="ti-label">MTTD</div>
+              <div class="ti-value" style="color:var(--cyan-bright)">2.3m</div>
+            </div>
+            <div class="threat-indicator">
+              <div class="ti-label">Open Cases</div>
+              <div class="ti-value" style="color:var(--purple-bright)">12</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONFIDENCE SCORES -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-dot purple"></div>
+              <span class="panel-title">Confidence Scores</span>
+            </div>
+            <span class="panel-badge">ML Model</span>
+          </div>
+          <div class="panel-content">
+            <div class="conf-list" id="conf-list">
+              <div class="conf-item">
+                <div class="conf-item-header">
+                  <span class="conf-name">Privilege Escalation</span>
+                  <span class="conf-pct" style="color:var(--red-bright)">96%</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:96%;background:linear-gradient(90deg,#ef4444,#dc2626)"></div>
+                </div>
+                <div class="conf-tag" style="color:var(--red-bright)">Critical</div>
+              </div>
+              <div class="conf-item">
+                <div class="conf-item-header">
+                  <span class="conf-name">Lateral Movement</span>
+                  <span class="conf-pct" style="color:var(--red-bright)">91%</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:91%;background:linear-gradient(90deg,#f87171,#ef4444)"></div>
+                </div>
+                <div class="conf-tag" style="color:var(--red-bright)">Critical</div>
+              </div>
+              <div class="conf-item">
+                <div class="conf-item-header">
+                  <span class="conf-name">Data Exfiltration</span>
+                  <span class="conf-pct" style="color:var(--amber-bright)">84%</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:84%;background:linear-gradient(90deg,#f59e0b,#d97706)"></div>
+                </div>
+                <div class="conf-tag" style="color:var(--amber-bright)">High</div>
+              </div>
+              <div class="conf-item">
+                <div class="conf-item-header">
+                  <span class="conf-name">Port Scan / Recon</span>
+                  <span class="conf-pct" style="color:var(--amber-bright)">78%</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:78%;background:linear-gradient(90deg,#fbbf24,#f59e0b)"></div>
+                </div>
+                <div class="conf-tag" style="color:var(--amber-bright)">High</div>
+              </div>
+              <div class="conf-item">
+                <div class="conf-item-header">
+                  <span class="conf-name">DNS Tunneling</span>
+                  <span class="conf-pct" style="color:var(--blue-bright)">62%</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:62%;background:linear-gradient(90deg,#60a5fa,#3b82f6)"></div>
+                </div>
+                <div class="conf-tag" style="color:var(--blue-bright)">Medium</div>
+              </div>
+              <div class="conf-item">
+                <div class="conf-item-header">
+                  <span class="conf-name">Brute Force SSH</span>
+                  <span class="conf-pct" style="color:var(--green-bright)">43%</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:43%;background:linear-gradient(90deg,#34d399,#10b981)"></div>
+                </div>
+                <div class="conf-tag" style="color:var(--green-bright)">Low</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SYSTEM HEALTH -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title-group">
+              <div class="panel-dot cyan"></div>
+              <span class="panel-title">System Health</span>
+            </div>
+          </div>
+          <div class="panel-content">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em">Log Ingestion Rate</span>
+                  <span style="font-family:var(--font-mono);font-size:9px;color:var(--cyan-bright)">1,034 evt/s</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:72%;background:linear-gradient(90deg,var(--cyan-core),#0891b2)"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em">Model CPU Load</span>
+                  <span style="font-family:var(--font-mono);font-size:9px;color:var(--amber-bright)">68%</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:68%;background:linear-gradient(90deg,var(--amber-core),#d97706)"></div>
+                </div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+                  <span style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.1em">Alert Queue</span>
+                  <span style="font-family:var(--font-mono);font-size:9px;color:var(--green-bright)">14%</span>
+                </div>
+                <div class="conf-bar-track">
+                  <div class="conf-bar-fill" style="width:14%;background:linear-gradient(90deg,var(--green-core),#059669)"></div>
+                </div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:4px">
+                <div style="text-align:center;padding:8px 4px;background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.15);border-radius:7px">
+                  <div style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--green-bright)">4</div>
+                  <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px">Agents</div>
+                </div>
+                <div style="text-align:center;padding:8px 4px;background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.15);border-radius:7px">
+                  <div style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--cyan-bright)">99.8%</div>
+                  <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px">Uptime</div>
+                </div>
+                <div style="text-align:center;padding:8px 4px;background:rgba(59,130,246,0.06);border:1px solid rgba(59,130,246,0.15);border-radius:7px">
+                  <div style="font-family:var(--font-mono);font-size:14px;font-weight:600;color:var(--blue-bright)">2.3ms</div>
+                  <div style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-top:2px">Latency</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  /* ============================================================
+     SECTION 1 — CLOCK
+  ============================================================ */
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('header-clock').textContent =
+      now.toTimeString().split(' ')[0] + ' IST';
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  /* ============================================================
+     SECTION 2 — COUNTER ANIMATION  (unchanged helper)
+  ============================================================ */
+  function animateCounter(el, target) {
+    if (!el) return;
+    let current = 0;
+    const step = Math.ceil(target / 40);
+    const timer = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = current.toLocaleString();
+      if (current >= target) clearInterval(timer);
+    }, 30);
+  }
+
+  /* ============================================================
+     SECTION 3 — RISK / STATUS MAPPING
+     Handles your exact data.json format:
+       status field: "LOW" | "HIGH" | "CRITICAL"
+     Maps to dashboard classes and display labels.
+  ============================================================ */
+  function mapRisk(raw) {
+    const r = (raw || '').toString().trim().toUpperCase();
+    if (r === 'CRITICAL') return { statusKey: 'critical',   rowClass: 'row-critical',   label: 'Critical',   severityScore: 3 };
+    if (r === 'HIGH')     return { statusKey: 'suspicious', rowClass: 'row-suspicious', label: 'Suspicious', severityScore: 2 };
+    return                       { statusKey: 'normal',     rowClass: 'row-normal',     label: 'Normal',     severityScore: 1 };
+  }
+
+  /* ============================================================
+     SECTION 4 — BUILD ONE LOG TABLE ROW
+     Reads these fields from each JSON object:
+       timestamp, event_type, user, process (or process_activity),
+       source_ip, status (LOW/HIGH/CRITICAL), confidence_score
+  ============================================================ */
+  function buildTableRow(record, isNew) {
+    const { statusKey, rowClass, label } = mapRisk(record.status || record.risk_level);
+
+    const ts = record.timestamp && record.timestamp !== 'LIVE'
+      ? record.timestamp
+      : (() => {
+          const n = new Date();
+          return n.toTimeString().split(' ')[0] + '.' + String(n.getMilliseconds()).padStart(3, '0');
+        })();
+
+    const eventType = record.event_type || 'System Event';
+    const process   = record.process || record.process_activity || '—';
+    const sourceIP  = record.source_ip || record.ip || '—';
+
+    // Confidence score: normalise 0–1 or 0–100 → "xx.x%"
+    let conf = '';
+    const raw = parseFloat(record.confidence_score);
+    if (!isNaN(raw)) conf = (raw <= 1 ? (raw * 100).toFixed(1) : raw.toFixed(1)) + '%';
+
+    const tr = document.createElement('tr');
+    tr.className = rowClass + (isNew ? ' row-new' : '');
+    tr.innerHTML = `
+      <td class="ts">${ts}</td>
+      <td>${eventType}</td>
+      <td class="user">${record.user || '—'}</td>
+      <td class="process">${process}</td>
+      <td class="ip">${sourceIP}</td>
+      <td>
+        <span class="status-pill ${statusKey}">
+          <span class="pill-dot"></span>${label}
+        </span>
+        ${conf ? `<span style="font-family:var(--font-mono);font-size:8px;color:var(--text-muted);margin-left:6px">${conf}</span>` : ''}
+      </td>`;
+    return tr;
+  }
+
+  /* ============================================================
+     SECTION 5 — METRIC CARDS
+     Total Events   = total rows
+     Suspicious     = count of HIGH
+     Critical Alerts= count of CRITICAL
+     Risk Score     = % CRITICAL  (shown on gauge)
+     Confidence     = average confidence_score
+  ============================================================ */
+  function updateMetricCards(data) {
+    const total    = data.length;
+    const high     = data.filter(r => (r.status || r.risk_level || '').toUpperCase() === 'HIGH').length;
+    const critical = data.filter(r => (r.status || r.risk_level || '').toUpperCase() === 'CRITICAL').length;
+
+    const confValues = data.map(r => parseFloat(r.confidence_score)).filter(v => !isNaN(v));
+    const avgConf = confValues.length
+      ? confValues.reduce((s, v) => s + (v <= 1 ? v * 100 : v), 0) / confValues.length
+      : null;
+
+    animateCounter(document.getElementById('total-events'),      total);
+    animateCounter(document.getElementById('suspicious-events'), high);
+    animateCounter(document.getElementById('critical-alerts'),   critical);
+
+    // Avg confidence card — id="avg-confidence" (set on the value element)
+    const confEl = document.getElementById('avg-confidence');
+    if (confEl && avgConf !== null) confEl.textContent = avgConf.toFixed(1) + '%';
+
+    // Update metric-sub lines with real numbers
+    const subs = document.querySelectorAll('.metric-sub');
+    if (subs[0]) subs[0].textContent = `${total} records loaded · from data.json`;
+    if (subs[1]) subs[1].textContent = `${((high / total) * 100 || 0).toFixed(1)}% of total · HIGH risk`;
+    if (subs[2]) subs[2].textContent = `${critical} unresolved · CRITICAL severity`;
+    if (subs[3] && avgConf !== null) subs[3].textContent = `ML ensemble · avg score ${avgConf.toFixed(1)}%`;
+  }
+
+  /* ============================================================
+     SECTION 6 — LOG TABLE POPULATION
+     Shows the last MAX_ROWS records on page load (newest first).
+  ============================================================ */
+  const MAX_ROWS = 8;
+
+  function populateTable(data) {
+    const tbody = document.getElementById('log-body');
+    tbody.innerHTML = '';
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;
+        font-family:var(--font-mono);font-size:10px;color:var(--text-muted);letter-spacing:0.1em">
+        No logs available</td></tr>`;
+      return;
+    }
+
+    const slice = data.slice(-MAX_ROWS).reverse();
+    slice.forEach((rec, i) => tbody.appendChild(buildTableRow(rec, i === 0)));
+
+    // Update the "N entries shown" badge in the log panel header
+    const badges = document.querySelectorAll('.panel-badge');
+    if (badges[0]) badges[0].textContent = slice.length + ' entries shown';
+  }
+
+  /* ============================================================
+     SECTION 7 — LIVE STREAM
+     Cycles through ALL records every 4 s, injecting rows at top.
+  ============================================================ */
+ // let streamData  = [];
+ // let streamIndex = 0;
+
+  //function startLiveStream() {
+   // if (!streamData.length) return;
+    //setInterval(() => {
+      //const record = streamData[streamIndex % streamData.length];
+      //streamIndex++;
+
+      //const tbody = document.getElementById('log-body');
+      //const rows  = tbody.querySelectorAll('tr');
+      //if (rows.length >= MAX_ROWS) rows[rows.length - 1].remove();
+      //tbody.insertBefore(buildTableRow(record, true), tbody.firstChild);
+    //}, 4000);
+  //}
+
+  /* ============================================================
+     SECTION 8 — THREAT GAUGE
+     Risk score % = (CRITICAL count / total) × 100
+  ============================================================ */
+  function updateGauge(data) {
+    const total    = data.length || 1;
+    const critical = data.filter(r => (r.status || r.risk_level || '').toUpperCase() === 'CRITICAL').length;
+    const high     = data.filter(r => (r.status || r.risk_level || '').toUpperCase() === 'HIGH').length;
+    const riskPct  = Math.round(((critical + high * 0.5) / total) * 100);
+
+    const CIRC  = 408.41;
+    const offset = +(CIRC - (CIRC * riskPct / 100)).toFixed(2);
+
+    const track  = document.getElementById('gauge-track');
+    const pctEl  = document.querySelector('.gauge-pct');
+    const lvlEl  = document.querySelector('.gauge-level-text');
+    const descEl = document.querySelector('.gauge-desc');
+    const gaugeBadge = document.querySelector('.panel-badge[class]'); // first badge = log panel
+
+    if (track)  setTimeout(() => { track.style.strokeDashoffset = offset; }, 400);
+    if (pctEl)  pctEl.textContent = riskPct + '%';
+    if (descEl) descEl.textContent = `${critical} CRITICAL · ${high} HIGH · ${total} total events`;
+
+    // Threat level indicators
+    const tiValues = document.querySelectorAll('.ti-value');
+    if (tiValues[0]) { // Attack Surface
+      tiValues[0].textContent = critical > 0 ? 'CRITICAL' : high > 0 ? 'HIGH' : 'LOW';
+      tiValues[0].style.color = critical > 0 ? 'var(--red-bright)' : high > 0 ? 'var(--amber-bright)' : 'var(--green-bright)';
+    }
+    if (tiValues[2]) { // MTTD — show open cases
+      tiValues[2].textContent = (critical + high) + ' open';
+    }
+    if (tiValues[3]) { // Open Cases
+      tiValues[3].textContent = critical;
+      tiValues[3].style.color = critical > 5 ? 'var(--red-bright)' : 'var(--purple-bright)';
+    }
+
+    if (lvlEl) {
+      if      (riskPct >= 60) { lvlEl.textContent = 'CRITICAL THREAT'; lvlEl.style.color = 'var(--red-bright)';   }
+      else if (riskPct >= 35) { lvlEl.textContent = 'HIGH THREAT';     lvlEl.style.color = 'var(--red-bright)';   }
+      else if (riskPct >= 15) { lvlEl.textContent = 'ELEVATED';        lvlEl.style.color = 'var(--amber-bright)'; }
+      else                    { lvlEl.textContent = 'NOMINAL';         lvlEl.style.color = 'var(--green-bright)'; }
+    }
+  }
+
+  /* ============================================================
+     SECTION 9 — CONFIDENCE SCORES PANEL
+     Groups events by event_type, computes avg confidence per group.
+     Shows top 6 event types with progress bars.
+  ============================================================ */
+  function updateConfidencePanel(data) {
+    const confList = document.getElementById('conf-list');
+    if (!confList) return;
+
+    // Group by event_type
+    const groups = {};
+    data.forEach(r => {
+      const key = r.event_type || 'Unknown Event';
+      if (!groups[key]) groups[key] = { total: 0, conf: 0, status: r.status || r.risk_level || 'LOW' };
+      groups[key].total++;
+      const c = parseFloat(r.confidence_score);
+      if (!isNaN(c)) groups[key].conf += (c <= 1 ? c * 100 : c);
+    });
+
+    // Sort by average confidence desc
+    const sorted = Object.entries(groups)
+      .map(([name, g]) => ({ name, avg: g.total ? g.conf / g.total : 0, count: g.total, status: g.status }))
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 6);
+
+    if (!sorted.length) return;
+
+    // Color by status of most common entry
+    const colorMap = {
+      CRITICAL: { pct: 'var(--red-bright)',    bar: 'linear-gradient(90deg,#ef4444,#dc2626)', tag: 'Critical'   },
+      HIGH:     { pct: 'var(--amber-bright)',  bar: 'linear-gradient(90deg,#f59e0b,#d97706)', tag: 'High'       },
+      LOW:      { pct: 'var(--green-bright)',  bar: 'linear-gradient(90deg,#34d399,#10b981)', tag: 'Low'        },
+    };
+
+    confList.innerHTML = sorted.map(item => {
+      const pct = Math.min(100, Math.round(item.avg));
+      const st  = (item.status || 'LOW').toUpperCase();
+      const col = colorMap[st] || colorMap['LOW'];
+      // If no confidence data, use event frequency as % proxy
+      const displayPct = pct > 0 ? pct : Math.min(99, Math.round((item.count / data.length) * 100 + 10));
+      return `
+      <div class="conf-item">
+        <div class="conf-item-header">
+          <span class="conf-name">${item.name}</span>
+          <span class="conf-pct" style="color:${col.pct}">${displayPct}%</span>
+        </div>
+        <div class="conf-bar-track">
+          <div class="conf-bar-fill" style="width:${displayPct}%;background:${col.bar}"></div>
+        </div>
+        <div class="conf-tag" style="color:${col.pct}">${col.tag} · ${item.count} events</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ============================================================
+     SECTION 10 — TOP ANOMALY ACTORS
+     Groups by user, assigns severity score:
+       CRITICAL = 3 pts,  HIGH = 2 pts,  LOW = 1 pt
+     Top 5 by total severity score.
+  ============================================================ */
+  function updateAnomalyActors(data) {
+    const susList = document.getElementById('sus-list');
+    if (!susList) return;
+
+    const users = {};
+    data.forEach(r => {
+      const u = r.user || 'unknown';
+      if (!users[u]) users[u] = { count: 0, score: 0, topStatus: 'LOW', process: r.process || r.process_activity || '—' };
+      users[u].count++;
+      const { severityScore } = mapRisk(r.status || r.risk_level);
+      users[u].score += severityScore;
+      // Upgrade topStatus if higher
+      const cur = (r.status || r.risk_level || 'LOW').toUpperCase();
+      if (cur === 'CRITICAL') users[u].topStatus = 'CRITICAL';
+      else if (cur === 'HIGH' && users[u].topStatus !== 'CRITICAL') users[u].topStatus = 'HIGH';
+      if (r.process || r.process_activity) users[u].process = r.process || r.process_activity;
+    });
+
+    const sorted = Object.entries(users)
+      .map(([name, d]) => ({ name, ...d }))
+      .sort((a, b) => b.score - a.score || b.count - a.count)
+      .slice(0, 5);
+
+    const palette = [
+      { bg: 'rgba(239,68,68,0.12)',  color: 'var(--red-bright)',    bar: 'var(--red-core)'    },
+      { bg: 'rgba(245,158,11,0.12)', color: 'var(--amber-bright)',  bar: 'var(--amber-core)'  },
+      { bg: 'rgba(239,68,68,0.10)', color: 'var(--red-bright)',    bar: 'var(--red-core)'    },
+      { bg: 'rgba(124,58,237,0.10)', color: 'var(--purple-bright)', bar: 'var(--purple-core)' },
+      { bg: 'rgba(59,130,246,0.10)', color: 'var(--blue-bright)',   bar: 'var(--blue-core)'   },
+    ];
+
+    const maxScore = sorted[0]?.score || 1;
+
+    susList.innerHTML = sorted.map((u, i) => {
+      const p = palette[i] || palette[4];
+      const barPct = Math.round((u.score / maxScore) * 100);
+      const initials = u.name.slice(0, 2).toUpperCase();
+      const normScore = (u.score / (u.count * 3)).toFixed(2); // normalise to 0–1
+      const rank = String(i + 1).padStart(2, '0');
+      return `
+      <div class="sus-item">
+        <div class="sus-rank">${rank}</div>
+        <div class="sus-avatar" style="background:${p.bg};color:${p.color}">${initials}</div>
+        <div class="sus-info">
+          <div class="sus-user">${u.name}</div>
+          <div class="sus-proc">${u.process} · ${u.count} events</div>
+        </div>
+        <div class="sus-mini-bar"><div class="sus-mini-fill" style="width:${barPct}%;background:${p.bar}"></div></div>
+        <div class="sus-score" style="color:${p.color}">${normScore}</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ============================================================
+     SECTION 11 — ALERT TIMELINE
+     Takes the most recent HIGH/CRITICAL events (up to 5).
+     Generates realistic SOC timeline entries from real data.
+  ============================================================ */
+  const TL_ICONS = {
+    CRITICAL: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>`,
+    HIGH:     `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    LOW:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+  };
+
+  function updateTimeline(data) {
+    const tl = document.getElementById('timeline-list');
+    if (!tl) return;
+
+    // Filter HIGH + CRITICAL, take last 5
+    const notable = data
+      .filter(r => ['HIGH','CRITICAL'].includes((r.status || r.risk_level || '').toUpperCase()))
+      .slice(-5).reverse();
+
+    if (!notable.length) {
+      tl.innerHTML = `<div class="tl-item"><div class="tl-body">
+        <div class="tl-title" style="color:var(--text-muted)">No high-severity events detected</div>
+      </div></div>`;
+      return;
+    }
+
+    tl.innerHTML = notable.map(r => {
+      const st  = (r.status || r.risk_level || 'LOW').toUpperCase();
+      const col = st === 'CRITICAL' ? 'red' : st === 'HIGH' ? 'amber' : 'blue';
+
+      // Format time — use timestamp field if it looks like a time string
+      let timeStr = '';
+      if (r.timestamp && r.timestamp !== 'LIVE') {
+        timeStr = r.timestamp.includes(':') ? r.timestamp.slice(0, 5) : r.timestamp;
+      } else {
+        const now = new Date();
+        timeStr = now.toTimeString().slice(0, 5);
+      }
+
+      const desc = [r.user, r.process || r.process_activity, r.source_ip]
+        .filter(Boolean).join(' · ') || 'System event detected';
+
+      return `
+      <div class="tl-item">
+        <div class="tl-icon ${col}">${TL_ICONS[st] || TL_ICONS['LOW']}</div>
+        <div class="tl-body">
+          <div class="tl-title">${r.event_type || 'Anomaly Detected'}</div>
+          <div class="tl-desc">${desc}</div>
+        </div>
+        <div class="tl-time">${timeStr}</div>
+      </div>`;
+    }).join('');
+  }
+
+  /* ============================================================
+     SECTION 12 — RESPONSE ACTIONS
+     CRITICAL records  → Block IP + Isolate Machine (red/blue)
+     HIGH records      → Investigate + Monitor (amber/purple)
+     Deduplicates by user/IP, max 4 actions shown.
+  ============================================================ */
+  const ACTION_SVGS = {
+    block:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>`,
+    isolate:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+    alert:      `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>`,
+    investigate:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    monitor:    `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`,
+  };
+
+  function updateResponseActions(data) {
+    const actionList = document.getElementById('action-list');
+    if (!actionList) return;
+
+    const criticals = data.filter(r => (r.status || r.risk_level || '').toUpperCase() === 'CRITICAL');
+    const highs     = data.filter(r => (r.status || r.risk_level || '').toUpperCase() === 'HIGH');
+
+    const actions = [];
+
+    // CRITICAL → Block IP + Isolate
+    const criticalIPs   = [...new Set(criticals.map(r => r.source_ip).filter(Boolean))].slice(0, 1);
+    const criticalUsers = [...new Set(criticals.map(r => r.user).filter(Boolean))].slice(0, 1);
+
+    if (criticalIPs.length) {
+      actions.push({
+        icon: 'block', iconColor: 'red',
+        name: 'Block IP Address',
+        target: `${criticalIPs[0]} · Firewall Rule Auto`,
+        status: 'executed', statusLabel: '✓ Executed'
+      });
+    }
+    if (criticalUsers.length) {
+      actions.push({
+        icon: 'isolate', iconColor: 'blue',
+        name: 'Isolate Machine',
+        target: `${criticalUsers[0]} · Network Quarantine`,
+        status: 'pending', statusLabel: '⏳ Pending'
+      });
+    }
+    if (criticals.length > 0) {
+      actions.push({
+        icon: 'alert', iconColor: 'amber',
+        name: 'Alert SOC Admin',
+        target: `${criticals.length} critical event(s) · Tier-3 Escalation`,
+        status: 'approved', statusLabel: '✓ Approved'
+      });
+    }
+
+    // HIGH → Investigate + Monitor
+    const highUsers = [...new Set(highs.map(r => r.user).filter(Boolean))].slice(0, 1);
+    if (highUsers.length) {
+      actions.push({
+        icon: 'investigate', iconColor: 'purple',
+        name: 'Investigate User',
+        target: `${highUsers[0]} · ${highs.length} suspicious event(s)`,
+        status: 'pending', statusLabel: '⏳ Pending'
+      });
+    }
+
+    // Fallback if no HIGH/CRITICAL at all
+    if (!actions.length) {
+      actions.push({
+        icon: 'monitor', iconColor: 'blue',
+        name: 'Continuous Monitoring',
+        target: `${data.length} events · All LOW risk`,
+        status: 'executed', statusLabel: '✓ Active'
+      });
+    }
+
+    actionList.innerHTML = actions.slice(0, 4).map(a => `
+      <div class="action-item">
+        <div class="action-icon ${a.iconColor}">${ACTION_SVGS[a.icon]}</div>
+        <div class="action-info">
+          <div class="action-name">${a.name}</div>
+          <div class="action-target">${a.target}</div>
+        </div>
+        <span class="action-status ${a.status}">${a.statusLabel}</span>
+      </div>`).join('');
+  }
+
+  /* ============================================================
+     SECTION 13 — MAIN LOADER
+     fetch('data.json') → wire ALL panels with real data
+  ============================================================ */
+  async function loadSOCData() {
+  try {
+    const response = await fetch('data.json');
+
+    if (!response.ok) {
+      throw new Error('API ERROR ' + response.status);
+    }
+
+    const records = await response.json();
+
+records.sort((a, b) =>
+    new Date(b.timestamp) - new Date(a.timestamp)
+);
+    if (!records || records.length === 0) {
+      throw new Error('EMPTY');
+    }
+
+    // ✅ Update ALL panels
+    populateTable(records.slice(0, 20));
+    updateMetricCards(records);
+    updateGauge(records);
+    updateConfidencePanel(records);
+    updateAnomalyActors(records);
+    updateTimeline(records);
+    updateResponseActions(records);
+
+    streamData = records;
+   //startLiveStream();
+
+  } catch (err) {
+
+    let msg = "";
+
+    if (err.message === "EMPTY") {
+      msg = "⚠ No logs available from backend";
+    } else {
+      msg = "⚠ API not reachable — is Flask running?";
+    }
+
+    document.getElementById('log-body').innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align:center;padding:20px;
+        color:red;font-family:monospace">
+        ${msg}
+        </td>
+      </tr>
+    `;
+
+    console.error("SOC ERROR:", err);
+  }
+}
+
+// 🔥 LOAD + AUTO REFRESH
+window.addEventListener('load', () => {
+
+    loadSOCData();
+
+    // AUTO REFRESH EVERY 5 SEC
+    setInterval(() => {
+
+        loadSOCData();
+
+    }, 10000);
+
+});
+
+</script>
+</body>
+</html>

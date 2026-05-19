@@ -1,0 +1,8 @@
+user,risk,confidence,action,message
+admin,MEDIUM,77.41935483870968,MONITOR,[WARNING] Suspicious user: admin → ALERT ADMIN
+alice,MEDIUM,64.51612903225806,MONITOR,[WARNING] Suspicious user: alice → ALERT ADMIN
+analyst,HIGH,100.0,BLOCK,[ALERT] High risk user: analyst → BLOCK / ISOLATE
+guest,MEDIUM,64.51612903225806,MONITOR,[WARNING] Suspicious user: guest → ALERT ADMIN
+john,HIGH,90.32258064516128,BLOCK,[ALERT] High risk user: john → BLOCK / ISOLATE
+root,MEDIUM,67.74193548387096,MONITOR,[WARNING] Suspicious user: root → ALERT ADMIN
+svc_backup,HIGH,87.09677419354838,BLOCK,[ALERT] High risk user: svc_backup → BLOCK / ISOLATE

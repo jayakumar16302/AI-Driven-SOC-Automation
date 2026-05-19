@@ -1,0 +1,23 @@
+user,failed_login,success_login,process_events,network_events,dns_events,file_events,svc_events,log_cleared,cmd_events,collector_high,login_failure_ratio,activity_score,suspicion_score,worst_collector_status
+LocalSystem,0,0,0,0,0,0,49,0,0,49,0.0,49,245.0,HIGH
+Certificate Service DCOM Access,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+RDS Remote Access Servers,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+RDS Endpoint Servers,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+RDS Management Servers,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Access Control Assistance Operators,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+-,0,0,0,0,0,0,0,0,0,0,0.0,5,0.0,LOW
+Event Log Readers,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Cryptographic Operators,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Remote Management Users,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Performance Log Users,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Hyper-V Administrators,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Performance Monitor Users,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Print Operators,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+IIS_IUSRS,0,0,0,0,0,0,0,0,0,0,0.0,3,0.0,LOW
+Remote Desktop Users,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Network Configuration Operators,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+Distributed COM Users,0,0,0,0,0,0,0,0,0,0,0.0,2,0.0,LOW
+SYSTEM,0,2,7,0,5,0,26,0,0,40,0.0,40,169.0,CRITICAL
+analyst,0,0,0,0,3,0,0,0,0,3,0.0,3,10.5,HIGH
+john,0,0,21,1,4,0,0,0,15,26,0.0,26,130.5,CRITICAL
+alice,0,0,32,12,0,0,0,0,18,44,0.0,44,200.0,CRITICAL
