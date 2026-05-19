@@ -2,61 +2,60 @@
 
 ## Overview
 
-This project focuses on building an intelligent and resilient SOC (Security Operations Center) automation system capable of detecting suspicious activities from system and security logs using machine learning and behavioral analysis.
+This project presents an AI-driven Security Operations Center (SOC) automation system designed to improve threat detection, reduce analyst workload, and automate security monitoring workflows.
 
-The system is designed to help Blue Team security operations by automating log collection, threat analysis, anomaly detection, alert prioritization, and dashboard visualization.
+The system collects and processes Windows security logs, applies machine learning techniques for anomaly detection, assigns confidence-based threat scores, and visualizes incidents through a SOC dashboard.
 
-Unlike traditional rule-based security monitoring systems, this project incorporates adversarial-resilient machine learning techniques to improve robustness against stealthy attacks, evasion attempts, and abnormal behavioral patterns.
+The project focuses on building a resilient Blue Team defense system capable of identifying suspicious behavior patterns and stealthy attack techniques that may bypass traditional rule-based security systems.
 
 ---
 
 ## Problem Statement
 
-Modern cyber attackers use stealth techniques such as:
+Modern cyber attackers use advanced evasion techniques such as:
 
 - Living-off-the-land attacks
 - Low-and-slow persistence
 - Encrypted command-and-control communication
-- Process masquerading
-- Insider-like behavioral patterns
+- Insider-like behavior patterns
+- Stealthy process execution
 
-These attacks often bypass traditional signature-based detection systems.
-
-Security analysts also face major challenges such as:
+Traditional security monitoring systems often struggle to detect these activities due to:
 
 - Alert fatigue
 - High false-positive rates
-- Manual investigation overhead
+- Manual log investigation
 - Delayed incident response
+- Lack of intelligent threat prioritization
 
-This project aims to address these problems by building an automated SOC workflow capable of continuously monitoring logs, identifying suspicious behavior, assigning confidence scores, and visualizing threats in real time.
+This project aims to automate SOC operations using machine learning, behavioral analytics, and intelligent detection workflows.
 
 ---
 
 ## Objectives
 
 - Automate SOC monitoring workflows
-- Process and analyze Windows security logs
+- Process and analyze Windows event logs
 - Detect anomalous system behavior using machine learning
 - Reduce false positives using ensemble detection
-- Improve threat prioritization through confidence scoring
-- Build a centralized SOC dashboard for visibility
-- Implement resilient detection techniques against adversarial attacks
+- Prioritize incidents using confidence scoring
+- Visualize threats through a centralized dashboard
+- Improve resilience against adversarial attack techniques
 
 ---
 
 ## Key Features
 
 - Multi-source log collection
-- Security event normalization
+- Security log preprocessing
 - Feature engineering pipeline
 - Isolation Forest-based anomaly detection
-- Ensemble detection approach
+- Ensemble detection engine
 - Confidence-based threat scoring
 - Automated alert generation
 - SOC dashboard visualization
-- Adversarial-resilient detection workflow
-- Controlled automated response mechanism
+- Behavioral analytics workflow
+- Adversarial-resilient detection techniques
 
 ---
 
@@ -78,6 +77,7 @@ This project aims to address these problems by building an automated SOC workflo
 - Blue Team Operations
 - Threat Detection
 - Security Event Monitoring
+- Log Analysis
 - Confidence Scoring
 - Adversarial Machine Learning
 
@@ -89,30 +89,16 @@ This project aims to address these problems by building an automated SOC workflo
 
 ---
 
-## System Workflow
+## Project Workflow
 
-1. Collect logs from multiple Windows event sources
+1. Collect logs from Windows event sources
 2. Convert raw logs into structured format
-3. Perform preprocessing and feature extraction
-4. Apply anomaly detection and behavioral analysis
-5. Generate alerts based on suspicious activity
-6. Assign confidence scores to incidents
-7. Display alerts and activity in SOC dashboard
-8. Support automated response mechanisms
-
----
-
-## Project Architecture
-
-The architecture consists of:
-
-- Log Collection Layer
-- Preprocessing & Normalization Layer
-- Feature Engineering Pipeline
-- Machine Learning Detection Engine
-- Confidence Scoring Module
-- Dashboard Visualization Layer
-- Automated Response Layer
+3. Preprocess and normalize security logs
+4. Extract important behavioral features
+5. Apply anomaly detection models
+6. Generate alerts based on suspicious activity
+7. Assign confidence scores to incidents
+8. Visualize alerts and activity in SOC dashboard
 
 ---
 
@@ -123,45 +109,65 @@ AI-Driven-SOC-Automation/
 │
 ├── scripts/          # Processing and ML scripts
 ├── data/             # CSV, JSON, and processed outputs
-├── images/           # Screenshots and project visuals
-├── dashboard/        # SOC dashboard files
-├── logs/             # Raw Windows event logs
+├── images/           # Dashboard and workflow screenshots
 ├── app.py
-└── README.md
+├── README.md
+└── requirements.txt
 ```
 
 ---
 
-## Dashboard
+## Screenshots
 
-The project includes a SOC dashboard for monitoring:
+### SOC Dashboard
 
-- Security alerts
-- Threat confidence levels
-- Process activity
-- Log statistics
-- Suspicious behavior indicators
+![SOC Dashboard](images/Dashboard.png)
+
+---
+
+### Logs and Detection Output
+
+![Logs](images/LOGS.png)
+
+---
+
+### Threat Detection Pipeline
+
+![Pipeline](images/Pipeline.png)
 
 ---
 
 ## Detection Techniques Used
 
 ### Anomaly Detection
-Isolation Forest is used to identify unusual activity patterns within system logs.
+Isolation Forest is used to identify unusual activity patterns and suspicious behaviors within system logs.
 
 ### Ensemble Detection
-Combines rule-based logic and machine learning predictions to improve detection accuracy.
+The system combines rule-based logic and machine learning predictions to improve detection accuracy and reduce false positives.
 
 ### Behavioral Analytics
-Monitors system and user behavior to identify stealthy attack techniques.
+Behavioral monitoring is used to identify stealthy attack patterns and abnormal activities.
 
 ### Confidence Scoring
-Threats are categorized into:
+Detected threats are categorized into:
 - Low Risk
 - Medium Risk
 - High Risk
 
-based on detection confidence.
+based on detection confidence levels.
+
+---
+
+## Dashboard Functionality
+
+The SOC dashboard provides visibility into:
+
+- Security alerts
+- Threat confidence levels
+- Log monitoring
+- Detection results
+- Suspicious process activity
+- Incident prioritization
 
 ---
 
@@ -170,10 +176,10 @@ based on detection confidence.
 - SIEM platform integration
 - Real-time streaming pipeline
 - Threat intelligence feed integration
-- Deep learning-based detection
+- Deep learning-based threat detection
 - Cloud deployment
 - Automated incident response orchestration
-- Advanced adversarial attack defense
+- Advanced adversarial defense techniques
 
 ---
 
@@ -204,11 +210,12 @@ Through this project, I gained practical exposure to:
 ## Author
 
 ### Jayakumar S
+
 MCA Graduate | Cybersecurity Enthusiast | SOC Automation & AI Security Learner
 
 Focused on:
 - Blue Teaming
 - SOC Operations
 - Threat Detection
-- AI in Cybersecurity
 - Security Automation
+- AI in Cybersecurity
